@@ -8,7 +8,10 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}.grid.solo{grid-template-columns:minmax(0,1fr)}
+.vBtns{display:flex;gap:6px;flex:none}
+@media (min-width:901px){.vClose{display:none}}
+</style>
 </head><body>
 <title>Plán do finále</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -208,7 +211,7 @@ td.down{color:var(--warn);font-weight:700}
           <div class="vdose" id="vdose"></div>
           <div class="vmu" id="vmu"></div>
         </div>
-        <button class="btn cuesToggle" id="cuesToggle" aria-expanded="false">Ako na to</button>
+        <div class="vBtns"><button class="btn cuesToggle" id="cuesToggle" aria-expanded="false">Ako na to</button><button class="btn vClose" id="vClose" aria-label="Zavrieť ukážku">Zavrieť</button></div>
       </div>
       <div class="stage" id="stage">
         <div class="phase" id="phase" hidden></div>
@@ -812,7 +815,14 @@ panes.forEach((p,i)=>{
   tabsEl.insertAdjacentHTML('beforeend',`<button class="tab" role="tab" id="t-${p.id}" aria-controls="p-${p.id}" aria-selected="${i===0}">${esc(p.tab)}</button>`);
   panesEl.insertAdjacentHTML('beforeend',`<div class="pane" role="tabpanel" id="p-${p.id}" aria-labelledby="t-${p.id}" ${i?'hidden':''}>${p.html}</div>`);
 });
-function showTab(id){panes.forEach(p=>{$("#t-"+p.id).setAttribute('aria-selected',p.id===id);$("#p-"+p.id).hidden=p.id!==id});try{localStorage.setItem('tab',id)}catch(e){}}
+var picked=false;
+function viewerVis(){
+  const tab=(panes.find(p=>!$("#p-"+p.id).hidden)||{}).id;
+  const mobile=matchMedia('(max-width:900px)').matches;
+  const hide=tab==='T'||tab==='D'||(mobile&&!picked);
+  $("#viewer").hidden=hide;document.querySelector('.grid').classList.toggle('solo',hide);
+}
+function showTab(id){panes.forEach(p=>{$("#t-"+p.id).setAttribute('aria-selected',p.id===id);$("#p-"+p.id).hidden=p.id!==id});try{localStorage.setItem('tab',id)}catch(e){}viewerVis()}
 tabsEl.addEventListener('click',e=>{const b=e.target.closest('.tab');if(b)showTab(b.id.slice(2))});
 try{const t=localStorage.getItem('tab');if(t&&panes.some(p=>p.id===t))showTab(t)}catch(e){}
 const hashId=(location.hash||'').slice(1);if(panes.some(p=>p.id===hashId))showTab(hashId);
@@ -822,8 +832,11 @@ document.addEventListener('click',e=>{
   document.querySelectorAll('[aria-current="true"]').forEach(x=>x.removeAttribute('aria-current'));
   b.setAttribute('aria-current','true');
   select(b.dataset.ex,b.dataset.dose,b.dataset.rest,b.dataset.ctx);
+  picked=true;viewerVis();
   if(window.matchMedia('(max-width:900px)').matches) $("#viewer").scrollIntoView({block:'nearest'});
 });
+$("#vClose").addEventListener('click',()=>{picked=false;document.querySelectorAll('.ex[aria-current="true"]').forEach(x=>x.removeAttribute('aria-current'));viewerVis()});
+matchMedia('(max-width:900px)').addEventListener('change',viewerVis);viewerVis();
 $("#cuesToggle").addEventListener('click',()=>{const v=$("#viewer");const o=v.classList.toggle('open');$("#cuesToggle").setAttribute('aria-expanded',o)});
 
 /* ================== 3D ================== */
@@ -1355,7 +1368,7 @@ const Store=(()=>{
   let state='local',lastErr='',busy=false;
   const enc=s=>{const b=new TextEncoder().encode(s);let bin='';for(let i=0;i<b.length;i+=0x8000)bin+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(bin)};
   const dec=b64=>new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\s/g,'')),c=>c.charCodeAt(0)));
-  const api=(path,opt={})=>fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/${path}`,{...opt,headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+cfg.token,'X-GitHub-Api-Version':'2022-11-28',...(opt.headers||{})},cache:'no-store'});
+  const api=(path,opt={})=>fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}${path?'/'+path:''}`,{...opt,headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+cfg.token,'X-GitHub-Api-Version':'2022-11-28',...(opt.headers||{})},cache:'no-store'});
   async function readRemote(){
     const r=await api('contents/'+FILE);
     if(r.status===404)return {list:[],sha:null};

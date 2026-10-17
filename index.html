@@ -796,7 +796,7 @@ panes.push({id:"D",tab:"Denník",html:`
   <p class="daysub" style="margin:0 0 8px">Vlož prístupový kľúč s prístupom len k repozitáru trening-data a právom Contents: Read and write. Kľúč ostane uložený len v tomto zariadení. Na každom telefóne či počítači ho vložíš raz.</p>
   <label class="fld">Prístupový kľúč<input type="password" id="ghToken" class="inp" autocomplete="off" spellcheck="false" placeholder="github_pat_…"></label>
   <div class="lgBtns" style="margin-top:8px"><button type="button" class="btn primary" id="ghConnect">Pripojiť</button><button type="button" class="btn" id="ghSync">Synchronizovať teraz</button><button type="button" class="btn" id="ghDisconnect" hidden>Odpojiť</button></div>
-  <p class="lgMsg" id="ghMsg" role="status" style="margin:8px 0 0"></p></section>`});
+  <p class="lgMsg" id="ghMsg" role="status" style="margin:8px 0 0"></p><p class="daysub" style="margin:8px 0 0">Verzia aplikácie: 3</p></section>`});
 panes.push({id:"F",tab:"Finále",html:`
  <section class="day"><div class="dayhead"><h3>Posledné dni</h3></div>
   <ul class="plain"><li><b>2 dni pred:</b> zjedz o niečo viac sacharidov, ktoré poznáš (ryža, zemiaky, ovsené vločky). Svaly budú plnšie.</li><li><b>1–2 dni pred:</b> menej strukovín, kapusty, sýtených nápojov a žuvačiek. Brucho bude menej nafúknuté.</li><li><b>Voda a soľ</b> ako zvyčajne. Neodvodňuj sa.</li><li><b>V deň súťaže:</b> normálne raňajky, malé jedlo 1,5–2 h pred výstupom.</li></ul></section>
@@ -1432,7 +1432,7 @@ const Store=(()=>{
     async connect(token,owner,repo){
       const prev=cfg;cfg={owner:owner||'samkowww',repo:repo||'trening-data',token:token.trim()};
       const r=await api('').catch(()=>null);
-      if(!r||!r.ok){cfg=prev;return r?(r.status===404?'Repozitár sa nenašiel alebo k nemu kľúč nemá prístup.':'Kľúč nefunguje (kód '+r.status+').'):'Nie je pripojenie na internet.'}
+      if(!r||!r.ok){cfg=prev;return r?(r.status===404?'Kľúč nemá prístup k repozitáru '+cfg.owner+'/'+cfg.repo+'. Pri kľúči nastav Repository access: Only select repositories a vyber trening-data.':'Kľúč nefunguje (kód '+r.status+').'):'Nie je pripojenie na internet.'}
       const j=await r.json();
       if(!j.permissions||!j.permissions.push){cfg=prev;return 'Kľúč môže čítať, ale nie zapisovať. Pri kľúči nastav Contents: Read and write.'}
       lsSet(CFG_KEY,cfg);state='ok';await flush();return '';
